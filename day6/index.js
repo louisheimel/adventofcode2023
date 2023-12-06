@@ -26,9 +26,8 @@ const waysToWin = ([time, distance]) => {
   return result 
 }
 compose(log, 
-  product,
-  map(waysToWin),
-  map(map(x => +x)),
-  xs => zip(...xs),
+  waysToWin,
+  map(x => +x),
+  map(sum),
   xs => [xs[0].slice(1), xs[1].slice(1)],
   map(x => x.split(/\s+/)), removeEmptyStrings, splitLines)(readText("input.txt"))
