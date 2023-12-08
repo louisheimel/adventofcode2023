@@ -46,10 +46,47 @@ const go = ({instructions, rest}) => {
   }
   return count 
 }
+const lcm = (...xs) => {
+  // TODO lcm algo here, used wolfram alpha
+  console.log(xs)
+}
+const go2 = ({instructions, rest}) => {
+  let start = Object.keys(rest).filter(x => x[x.length - 1] == 'A')
+  let pattern = [...start]
+  let count = 0
+  let i = 0
+  console.log(start)
+  while(start.some(x => x[x.length - 1] != 'Z')) {
+    if (pattern.every(x => !isNaN(x))) {
+      return lcm(...pattern)
+    }
+    let instruction = instructions[i]
+    for (let i = 0; i < start.length; i++) {
+      const token = start[i]
+      if (token[token.length - 1] == 'Z' && isNaN(pattern[i])) {
+        pattern[i] = count
+      }
+      if (instruction == 'L') {
+        start[i] = rest[token][0]
+      } else if (instruction == 'R') {
+        start[i] = rest[token][1]
+
+      }
+    }
+    i = (i + 1) % instructions.length
+    if (count % 1000000 == 0) {
+      console.log(start, count)
+    }
+    count++
+    
+  }
+  return count 
+    
+}
 compose(
 
   log,
-  go,
+  go2,
   parse,
   removeEmptyStrings,
   splitLines,
