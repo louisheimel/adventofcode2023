@@ -53,4 +53,4 @@ compose(
   parse,
   removeEmptyStrings,
   splitLines,
-  readText)("test.txt")
+  readText)("input.txt")
