@@ -35,12 +35,32 @@ const findNextSequenceItem = xs => {
   return sum(rows.map(e => e[e.length - 1]))
 
 }
+const findNextSequenceItem2 = xs => {
+  const findRow = xs => xs.slice(0, xs.length - 1).map((e, i) => xs[i + 1] - xs[i])
+  const allZeroes = xs => {
+    return xs.every(x => x == 0)
+  }
+  let temp = [...xs]
+  let rows = []
+  while(!allZeroes(temp) && !(temp.length == 0)) {
+    rows.push(temp)
+    temp = findRow(temp)
+  }
+  rows.push(temp)
+  rows = rows.reverse()
+  let start = 0
+  for (let i = 1; i < rows.length; i++) {
+    start = rows[i][0] - start
+  }
+  return start
+
+}
 compose(
   log,
   sum,
   map(
     compose(
-      findNextSequenceItem,
+      findNextSequenceItem2,
       map(x => +x),
       split(" ")
     )
@@ -49,5 +69,5 @@ compose(
   splitLines,
   readText
 )(
-  "test.txt"
+  "input.txt"
 )
