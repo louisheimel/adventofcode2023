@@ -38,6 +38,9 @@ const and = (...fns) => x => fns.every(f => f(x))
 //-----------------------------------------------------------------
 const cards = 
   ["A", "K", "Q", "J", "T", "9", "8", "7", "6", "5", "4", "3", "2"]
+
+const cardPointMapping = cards.reverse().reduce((a, e, i) => ({...a, [e[0]]: i}), {})
+
 const handRank = [
   "FIVE_OF_KIND",
   "FOUR_OF_KIND",
@@ -48,11 +51,11 @@ const handRank = [
   "HIGH_CARD"
 ]
 
-const fiveOfKind = cards => compose(
+const fiveOfKind = compose(
   m => m.size == 1,
   hist
 )
-const fourOfKind = cards => compose(
+const fourOfKind = compose(
   m => m.size == 2,
   hist
 )
@@ -65,7 +68,17 @@ const twoOfKind = compose(
   m => !![...m.entries()].find(x => x[1] == 2),
   hist
 )
-const fullHouse = xs => and(threeOfKind, twoOfKind)
+const fullHouse = xs => {
+  let hasTwo = false
+  let hasThree = false
+  const m = hist(xs)
+  const mapEntries = [...m.entries()]
+  mapEntries.forEach(e => {
+    if (e[1] == 2) { hasTwo = true }
+    if (e[1] == 3) { hasThree = true }
+  })
+  return hasTwo && hasThree
+}
 const twoPair = compose(
   m => {
     let pairCount = 0;
@@ -94,13 +107,104 @@ const onePair = compose(
 )
 
 
+const rankHands = xs => {
+  const rankHand = ([cards, ...rest]) => {
+    let rank = null
+    if (fiveOfKind(cards)) {
+      rank = 'FIVE_OF_KIND'
+    } else if (fourOfKind(cards)) {
+      rank = 'FOUR_OF_KIND'
+    } else if (fullHouse(cards)) {
+      rank = 'FULL_HOUSE'
+    } else if (threeOfKind(cards)) {
+      rank = 'THREE_OF_KIND'
+    } else if (twoPair(cards)) {
+      rank = 'TWO_PAIR'
+    } else if (onePair(cards)) {
+      rank = 'ONE_PAIR'
+    } else {
+      rank = 'HIGH_CARD'
+    }
+    return [cards, ...rest, rank]
+  }
+  return xs.map(rankHand)
+}
 
+  const handRankMapping = handRank.reduce((a, e, i) => ({...a, [e]: (6 - i + 1)}), {})
+  const tiebreakFiveOfKind = (a, b) => {
+      const firstScore = cardPointMapping[a[0][0]]
+      const secondScore = cardPointMapping[b[0][0]]
+      if (secondScore > firstScore) {
+        return 1
+      } else if (secondScore == firstScore) {
+        return 0
+      }
+      return -1
 
+  }
+  const tiebreakFourOfKind = (a, b) => {
+    const mostFrequentCard = cards => {
+      const cardByFreq = Array.from(hist(cards).entries()).map(([k, v]) => [v, k])
+      return cardByFreq.reduce((a, e) => {
+        return e[0] > a[0] ? e : a
+      }, [-1])[1]
+
+    }
+    const scoreA = cardPointMapping[mostFrequentCard(a)]
+    const scoreB = cardPointMapping[mostFrequentCard(b)]
+    if (scoreA > scoreB) return 1
+    if (scoreA == scoreB) return 0
+    return -1
+
+  }
+//   console.log(tiebreakFourOfKind(['2', '2', '2', '2', '3'], ['3', '3', '3', '3', '2']))
+  const tiebreakFullHouse = (a, b) => {}
+  const tiebreakThreeOfKind = (a, b) => {}
+  const tiebreakTwoPair = (a, b) => {}
+  const tiebreakOnePair = (a, b) => {}
+  const tiebreakHighCard = (a, b) => {}
+
+const betterHand = (a, b) => {
+
+const firstScore = handRankMapping[a[2]]
+  const secondScore = handRankMapping[b[2]]
+  if (secondScore > firstScore) return 1
+  const tiebreak = (a, b) => {
+    if (a[2] == 'FIVE_OF_KIND') {
+      return tiebreakFiveOfKind(a, b)
+
+    } else if (a[2] == 'FOUR_OF_KIND') {
+      return tiebreakFourOfKind(a, b)
+    } else if (a[2] == 'FULL_HOUSE') {
+      return tiebreakFullHouse(a, b)
+    }
+    else if (a[2] == 'THREE_OF_KIND') {
+      return tiebreakThreeOfKind(a, b)
+    }
+    else if (a[2] == 'TWO_PAIR') {
+      return tiebreakTwoPair(a, b)
+    }
+    else if (a[2] == 'ONE_PAIR') {
+      return tiebreakOnePair(a, b)
+    }
+    else if (a[2] == 'HIGH_CARD') {
+      return tiebreakHighCard(a, b)
+    }
+  }
+  if (firstScore == secondScore) {
+    return tiebreak(a, b)
+  }
+  return -1
+}
 // 6440
 compose(
   log,
+  hands => {
+    hands.sort(betterHand)
+    return hands
+  },
+  rankHands,
   map(compose(
-    mapFirst(hist),
     mapRest(toInt),
     mapFirst(split("")),
     split(" "))),
